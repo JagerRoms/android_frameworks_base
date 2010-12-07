@@ -101,6 +101,8 @@ class NotificationManagerService extends INotificationManager.Stub
     private boolean mSystemReady;
     private int mDisabledNotifications;
 
+    private boolean mNotificationLedScreenOn;
+
     private NotificationRecord mVibrateNotification;
     private Vibrator mVibrator = new Vibrator();
 
@@ -440,6 +442,9 @@ class NotificationManagerService extends INotificationManager.Stub
                     Settings.Secure.DEVICE_PROVISIONED, 0)) {
             mDisabledNotifications = StatusBarManager.DISABLE_NOTIFICATION_ALERTS;
         }
+
+        mNotificationLedScreenOn = (Settings.Secure.getInt(mContext.getContentResolver(),
+                Settings.Secure.DISPLAY_NOTIFICATION_LED_SCREEN_ON, 0) != 0);
 
         // register for battery changed notifications
         IntentFilter filter = new IntentFilter();
@@ -1070,7 +1075,7 @@ class NotificationManagerService extends INotificationManager.Stub
 
         // we only flash if screen is off and persistent pulsing is enabled
         // and we are not currently in a call
-        if (mLedNotification == null || mScreenOn || mInCall) {
+        if (mLedNotification == null || (mScreenOn && !mNotificationLedScreenOn) || mInCall) {
             mNotificationLight.turnOff();
         } else {
             int ledARGB = mLedNotification.notification.ledARGB;
@@ -1120,7 +1125,10 @@ class NotificationManagerService extends INotificationManager.Stub
     // to accidentally lose.
     private void updateAdbNotification() {
         if (mAdbEnabled && mUsbConnected) {
-            if ("0".equals(SystemProperties.get("persist.adb.notify"))) {
+            if ("0".equals(SystemProperties.get("persist.adb.notify")) ||
+                    Settings.Secure.getInt(mContext.getContentResolver(),
+                            Settings.Secure.DISPLAY_ADB_USB_DEBUGGING_NOTIFICATION,
+                            1) == 0) {
                 return;
             }
             if (!mAdbNotificationShown) {

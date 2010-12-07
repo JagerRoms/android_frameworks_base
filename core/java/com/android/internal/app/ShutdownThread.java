@@ -70,9 +70,65 @@ public final class ShutdownThread extends Thread {
     private PowerManager.WakeLock mWakeLock;
     private Handler mHandler;
     
+    private enum ShutdownType {
+        POWER_OFF,
+        REBOOT,
+        RECOVERY
+    }
+
+    private ShutdownType mShutdownType;
+
     private ShutdownThread() {
     }
- 
+
+     /**
+      * Request a clean reboot to recovery, waiting for subsystems to clean up their
+      * state etc.  Must be called from a Looper thread in which its UI
+      * is shown.
+      *
+      * @param context Context used to display the shutdown progress dialog.
+      * @param confirm whether or not to confirm
+      */
+     public static void reboot(final Context context, boolean confirm) {
+         // ensure that only one thread is trying to power down.
+         // any additional calls are just returned
+         synchronized (sIsStartedGuard){
+             if (sIsStarted) {
+                 Log.d(TAG, "Request to shutdown already running, returning.");
+                 return;
+             }
+         }
+
+         Log.d(TAG, "Notifying thread to start radio shutdown");
+
+         if (confirm) {
+             final AlertDialog dialog = new AlertDialog.Builder(context)
+                     .setIcon(android.R.drawable.ic_dialog_alert)
+                     .setTitle(com.android.internal.R.string.reboot)
+                     .setMessage(com.android.internal.R.string.reboot_confirm)
+                     .setPositiveButton(com.android.internal.R.string.yes, new DialogInterface.OnClickListener() {
+                         public void onClick(DialogInterface dialog, int which) {
+                             beginShutdownSequence(context, ShutdownType.REBOOT);
+                         }
+                     })
+                     .setNeutralButton(com.android.internal.R.string.recovery, new DialogInterface.OnClickListener() {
+                         public void onClick(DialogInterface dialog, int which) {
+                             beginShutdownSequence(context, ShutdownType.RECOVERY);
+                         }
+                     })
+                     .setNegativeButton(com.android.internal.R.string.no, null)
+                     .create();
+             dialog.getWindow().setType(WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG);
+             if (!context.getResources().getBoolean(
+                     com.android.internal.R.bool.config_sf_slowBlur)) {
+                 dialog.getWindow().addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND);
+             }
+             dialog.show();
+         } else {
+             beginShutdownSequence(context, ShutdownType.REBOOT);
+         }
+     }
+
     /**
      * Request a clean shutdown, waiting for subsystems to clean up their
      * state etc.  Must be called from a Looper thread in which its UI
@@ -100,7 +156,7 @@ public final class ShutdownThread extends Thread {
                     .setMessage(com.android.internal.R.string.shutdown_confirm)
                     .setPositiveButton(com.android.internal.R.string.yes, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
-                            beginShutdownSequence(context);
+                            beginShutdownSequence(context, ShutdownType.POWER_OFF);
                         }
                     })
                     .setNegativeButton(com.android.internal.R.string.no, null)
@@ -112,7 +168,7 @@ public final class ShutdownThread extends Thread {
             }
             dialog.show();
         } else {
-            beginShutdownSequence(context);
+            beginShutdownSequence(context, ShutdownType.POWER_OFF);
         }
     }
 
@@ -131,7 +187,7 @@ public final class ShutdownThread extends Thread {
         shutdown(context, confirm);
     }
 
-    private static void beginShutdownSequence(Context context) {
+    private static void beginShutdownSequence(Context context, ShutdownType stype) {
         synchronized (sIsStartedGuard) {
             sIsStarted = true;
         }
@@ -139,8 +195,23 @@ public final class ShutdownThread extends Thread {
         // throw up an indeterminate system dialog to indicate radio is
         // shutting down.
         ProgressDialog pd = new ProgressDialog(context);
-        pd.setTitle(context.getText(com.android.internal.R.string.power_off));
-        pd.setMessage(context.getText(com.android.internal.R.string.shutdown_progress));
+
+	switch(stype) {
+            case REBOOT:
+                pd.setTitle(context.getText(com.android.internal.R.string.reboot));
+                pd.setMessage(context.getText(com.android.internal.R.string.reboot_progress));
+                break;
+            case RECOVERY:
+                pd.setTitle(context.getText(com.android.internal.R.string.recovery));
+                pd.setMessage(context.getText(com.android.internal.R.string.recovery_progress));
+                break;
+            case POWER_OFF:
+            default:
+                pd.setTitle(context.getText(com.android.internal.R.string.power_off));
+                pd.setMessage(context.getText(com.android.internal.R.string.shutdown_progress));
+                break;
+        }
+
         pd.setIndeterminate(true);
         pd.setCancelable(false);
         pd.getWindow().setType(WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG);
@@ -167,6 +238,7 @@ public final class ShutdownThread extends Thread {
         }
         sInstance.mHandler = new Handler() {
         };
+        sInstance.mShutdownType = stype;
         sInstance.start();
     }
 
@@ -341,6 +413,27 @@ public final class ShutdownThread extends Thread {
 
         // Shutdown power
         Log.i(TAG, "Performing low-level shutdown...");
-        Power.shutdown();
+        switch(mShutdownType) {
+            case REBOOT:
+                try {
+                    Power.reboot(null);
+                } catch (Exception e) {
+                    Log.e(TAG, "Exception during reboot, continuing shutdown", e);
+                    Power.shutdown();
+                }
+                break;
+            case RECOVERY:
+                try {
+                    Power.reboot("recovery");
+                } catch (Exception e) {
+                    Log.e(TAG, "Exception during reboot to recovery, continuing shutdown", e);
+                    Power.shutdown();
+                }
+                break;
+            case POWER_OFF:
+            default:
+                Power.shutdown();
+                break;
+        }
     }
 }

@@ -342,6 +342,13 @@ status_t AudioSystem::setVoiceVolume(float value)
     return af->setVoiceVolume(value);
 }
 
+// stubs for a2dp passthrough
+// this is needed to help maintain linking when building for shadow
+bool AudioSystem::isA2dpCapable(uint32_t format, uint32_t channels, uint32_t samplingRate) { return false; }
+void AudioSystem::a2dpReconfigure(int output, uint32_t format, uint32_t channels, uint32_t sampleRate) { }
+void AudioSystem::stopA2dp() { }
+bool AudioSystem::a2dpCategory2Supported() { return false; }
+
 status_t AudioSystem::getRenderPosition(uint32_t *halFrames, uint32_t *dspFrames, int stream)
 {
     const sp<IAudioFlinger>& af = AudioSystem::get_audio_flinger();

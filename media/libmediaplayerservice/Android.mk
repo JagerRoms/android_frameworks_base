@@ -13,6 +13,7 @@ LOCAL_SRC_FILES:=               \
     TestPlayerStub.cpp          \
     VorbisPlayer.cpp            \
     VorbisMetadataRetriever.cpp \
+    FLACPlayer.cpp              \
     MidiMetadataRetriever.cpp 	\
     MidiFile.cpp
 
@@ -46,6 +47,7 @@ LOCAL_SHARED_LIBRARIES :=     		\
 ifneq ($(BUILD_WITHOUT_PV),true)
 LOCAL_SHARED_LIBRARIES += \
 	libopencore_player    \
+        libFLAC               \
 	libopencore_author
 else
 LOCAL_CFLAGS += -DNO_OPENCORE
@@ -56,6 +58,7 @@ LOCAL_SHARED_LIBRARIES += libdl
 endif
 
 LOCAL_C_INCLUDES :=                                                 \
+        $(TOP)/external/flac/include                                    \
 	$(JNI_H_INCLUDE)                                                \
 	$(call include-path-for, graphics corecg)                       \
 	$(TOP)/external/opencore/extern_libs_v2/khronos/openmax/include \

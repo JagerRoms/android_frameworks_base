@@ -119,7 +119,7 @@ public class StatusBarPolicy {
     private TelephonyManager mPhone;
     private IBinder mPhoneIcon;
 
-    //***** Signal strength icons
+    // ***** Signal strength icons
     private IconData mPhoneData;
     //GSM/UMTS
     private static final int[] sSignalImages = new int[] {
@@ -127,14 +127,16 @@ public class StatusBarPolicy {
         com.android.internal.R.drawable.stat_sys_signal_1,
         com.android.internal.R.drawable.stat_sys_signal_2,
         com.android.internal.R.drawable.stat_sys_signal_3,
-        com.android.internal.R.drawable.stat_sys_signal_4
+        com.android.internal.R.drawable.stat_sys_signal_4,
+        com.android.internal.R.drawable.stat_sys_signal_5
     };
     private static final int[] sSignalImages_r = new int[] {
         com.android.internal.R.drawable.stat_sys_r_signal_0,
         com.android.internal.R.drawable.stat_sys_r_signal_1,
         com.android.internal.R.drawable.stat_sys_r_signal_2,
         com.android.internal.R.drawable.stat_sys_r_signal_3,
-        com.android.internal.R.drawable.stat_sys_r_signal_4
+        com.android.internal.R.drawable.stat_sys_r_signal_4,
+        com.android.internal.R.drawable.stat_sys_r_signal_5
     };
     private static final int[] sRoamingIndicatorImages_cdma = new int[] {
         com.android.internal.R.drawable.stat_sys_roaming_cdma_0, //Standard Roaming Indicator
@@ -236,7 +238,7 @@ public class StatusBarPolicy {
         // 128-255 Reserved
     };
 
-    //***** Data connection icons
+    // ***** Data connection icons
     private int[] mDataIconList = sDataNetType_g;
     //GSM/UMTS
     private static final int[] sDataNetType_g = new int[] {
@@ -425,7 +427,7 @@ public class StatusBarPolicy {
                 new com.android.server.status.StorageNotification(context));
 
         // battery
-        mBatteryData = IconData.makeIcon("battery",
+        mBatteryData = IconData.makeIconNumber("battery",
                 null, com.android.internal.R.drawable.stat_sys_battery_unknown, 0, 0);
         mBatteryIcon = service.addIcon(mBatteryData, null);
 
@@ -648,7 +650,6 @@ public class StatusBarPolicy {
     private final void updateBattery(Intent intent) {
         mBatteryData.iconId = intent.getIntExtra("icon-small", 0);
         mBatteryData.iconLevel = intent.getIntExtra("level", 0);
-        mService.updateIcon(mBatteryIcon, mBatteryData, null);
 
         boolean plugged = intent.getIntExtra("plugged", 0) != 0;
         int level = intent.getIntExtra("level", -1);
@@ -659,6 +660,9 @@ public class StatusBarPolicy {
                     + " mBatteryLevel=" + mBatteryLevel
                     + " mBatteryFirst=" + mBatteryFirst);
         }
+
+        mBatteryData.number = (plugged || level >= 100) ? -1 : level;
+        mService.updateIcon(mBatteryIcon, mBatteryData, null);
 
         boolean oldPlugged = mBatteryPlugged;
 
@@ -681,6 +685,7 @@ public class StatusBarPolicy {
             }
         }
         */
+
         if (false) {
             Slog.d(TAG, "plugged=" + plugged + " oldPlugged=" + oldPlugged + " level=" + level);
         }
@@ -995,11 +1000,13 @@ public class StatusBarPolicy {
             // asu = 0 (-113dB or less) is very weak
             // signal, its better to show 0 bars to the user in such cases.
             // asu = 99 is a special case, where the signal strength is unknown.
-            if (asu <= 2 || asu == 99) iconLevel = 0;
-            else if (asu >= 12) iconLevel = 4;
-            else if (asu >= 8)  iconLevel = 3;
-            else if (asu >= 5)  iconLevel = 2;
-            else iconLevel = 1;
+
+                if (asu <= 1 || asu == 99) iconLevel = 0;
+                else if (asu >= 11)  iconLevel = 5;
+                else if (asu >= 9)  iconLevel = 4;
+                else if (asu >= 6)  iconLevel = 3;
+                else if (asu >= 3)  iconLevel = 2;
+                else iconLevel = 1;
 
             // Though mPhone is a Manager, this call is not an IPC
             if (mPhone.isNetworkRoaming()) {
@@ -1032,15 +1039,17 @@ public class StatusBarPolicy {
         int levelDbm = 0;
         int levelEcio = 0;
 
-        if (cdmaDbm >= -75) levelDbm = 4;
-        else if (cdmaDbm >= -85) levelDbm = 3;
+        if (cdmaDbm >= -75) levelDbm = 5;
+        else if (cdmaDbm >= -85) levelDbm = 4;
+        else if (cdmaDbm >= -90) levelDbm = 3;
         else if (cdmaDbm >= -95) levelDbm = 2;
-        else if (cdmaDbm >= -100) levelDbm = 1;
+        else if (cdmaDbm >= -105) levelDbm = 1;
         else levelDbm = 0;
 
         // Ec/Io are in dB*10
-        if (cdmaEcio >= -90) levelEcio = 4;
-        else if (cdmaEcio >= -110) levelEcio = 3;
+        if (cdmaEcio >= -90) levelEcio = 5;
+        else if (cdmaEcio >= -110) levelEcio = 4;
+        else if (cdmaEcio >= -120) levelEcio = 3;
         else if (cdmaEcio >= -130) levelEcio = 2;
         else if (cdmaEcio >= -150) levelEcio = 1;
         else levelEcio = 0;
@@ -1054,14 +1063,16 @@ public class StatusBarPolicy {
         int levelEvdoDbm = 0;
         int levelEvdoSnr = 0;
 
-        if (evdoDbm >= -65) levelEvdoDbm = 4;
-        else if (evdoDbm >= -75) levelEvdoDbm = 3;
-        else if (evdoDbm >= -90) levelEvdoDbm = 2;
-        else if (evdoDbm >= -105) levelEvdoDbm = 1;
+        if (evdoDbm >= -80) levelEvdoDbm = 5;
+        else if (evdoDbm >= -90) levelEvdoDbm = 4;
+        else if (evdoDbm >= -95) levelEvdoDbm = 3;
+        else if (evdoDbm >= -100) levelEvdoDbm = 2;
+        else if (evdoDbm >= -110) levelEvdoDbm = 1;
         else levelEvdoDbm = 0;
 
-        if (evdoSnr >= 7) levelEvdoSnr = 4;
-        else if (evdoSnr >= 5) levelEvdoSnr = 3;
+        if (evdoSnr >= 7) levelEvdoSnr = 5;
+        else if (evdoSnr >= 5) levelEvdoSnr = 4;
+        else if (evdoSnr >= 4) levelEvdoSnr = 3;
         else if (evdoSnr >= 3) levelEvdoSnr = 2;
         else if (evdoSnr >= 1) levelEvdoSnr = 1;
         else levelEvdoSnr = 0;

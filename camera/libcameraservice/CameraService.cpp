@@ -67,6 +67,24 @@ extern "C" {
 static int debug_frame_cnt;
 #endif
 
+struct camera_size_type {
+    int width;
+    int height;
+};
+
+struct camera_resize_table_entry {
+    camera_size_type old_size;
+    camera_size_type new_size;
+};
+
+static const int preview_resize_table_len = 1;
+static const camera_resize_table_entry preview_resize_table[] = {
+    { // entry 0
+        { 1280, 720 }, // old_size
+        { 768, 432 } // new_size
+    }
+};
+
 static int getCallingPid() {
     return IPCThreadState::self()->getCallingPid();
 }
@@ -555,6 +573,18 @@ status_t CameraService::Client::setOverlay()
     CameraParameters params(mHardware->getParameters());
     params.getPreviewSize(&w, &h);
 
+    // cycle through our resize table
+    for ( int i = 0; i < preview_resize_table_len; i++ )
+    {
+        if ( w == preview_resize_table[i].old_size.width &&
+             h == preview_resize_table[i].old_size.height )
+        {
+            w = preview_resize_table[i].new_size.width;
+            h = preview_resize_table[i].new_size.height;
+            break;
+        }
+    }
+
     if ( w != mOverlayW || h != mOverlayH )
     {
         // Force the destruction of any previous overlay
@@ -605,6 +635,18 @@ status_t CameraService::Client::registerPreviewBuffers()
     int w, h;
     CameraParameters params(mHardware->getParameters());
     params.getPreviewSize(&w, &h);
+
+    // cycle through our resize table
+    for ( int i = 0; i < preview_resize_table_len; i++ )
+    {
+        if ( w == preview_resize_table[i].old_size.width &&
+             h == preview_resize_table[i].old_size.height )
+        {
+            w = preview_resize_table[i].new_size.width;
+            h = preview_resize_table[i].new_size.height;
+            break;
+        }
+    }
 
     // don't use a hardcoded format here
     ISurface::BufferHeap buffers(w, h, w, h,

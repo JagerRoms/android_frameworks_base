@@ -504,6 +504,8 @@ class PowerManagerService extends IPowerManager.Stub
 
         Resources resources = mContext.getResources();
 
+        ContentResolver resolver = mContext.getContentResolver();
+
         // read settings for auto-brightness
         mUseSoftwareAutoBrightness = resources.getBoolean(
                 com.android.internal.R.bool.config_automatic_brightness_available);
@@ -518,9 +520,20 @@ class PowerManagerService extends IPowerManager.Stub
                     com.android.internal.R.array.config_autoBrightnessKeyboardBacklightValues);
             mLightSensorWarmupTime = resources.getInteger(
                     com.android.internal.R.integer.config_lightSensorWarmupTime);
+
+            // don't bother unless we can do this
+            if (mLcdBacklightValues != null && mLcdBacklightValues.length > 0) {
+                int autoBrightnessMin = Settings.Secure.getInt(resolver,
+                        Settings.Secure.AUTO_BRIGHTNESS_MINIMUM_BACKLIGHT_LEVEL,
+                        -1);
+
+                // if the setting exists, overwrite the lcd auto-brightness low value
+                if(autoBrightnessMin >= 0) {
+                    mLcdBacklightValues[0] = autoBrightnessMin;
+                }
+            }
         }
 
-       ContentResolver resolver = mContext.getContentResolver();
         Cursor settingsCursor = resolver.query(Settings.System.CONTENT_URI, null,
                 "(" + Settings.System.NAME + "=?) or ("
                         + Settings.System.NAME + "=?) or ("

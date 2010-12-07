@@ -222,6 +222,12 @@ public:
 
     static status_t setVoiceVolume(float volume);
 
+    // these are all stubs... needed to build for shadow
+    static bool isA2dpCapable(uint32_t format, uint32_t channels, uint32_t samplingRate);
+    static void a2dpReconfigure(int output, uint32_t format, uint32_t channels, uint32_t sampleRate);
+    static void stopA2dp();
+    static bool a2dpCategory2Supported();
+
     // return the number of audio frames written by AudioFlinger to audio HAL and
     // audio dsp to DAC since the output on which the specificed stream is playing
     // has exited standby.

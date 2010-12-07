@@ -167,5 +167,55 @@
         android:visibility="gone"
         />
 
+    <!-- music controls -->
+    <ImageButton
+        android:id="@+id/mediaPlayButton"
+        android:src="@drawable/ic_media_play"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="20dip"
+        android:padding="10px"
+        android:background="@color/transparent"
+        android:visibility="gone"
+        />
+    <ImageButton
+        android:id="@+id/mediaPauseButton"
+        android:src="@drawable/ic_media_pause"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="20dip"
+        android:padding="10px"
+        android:background="@color/transparent"
+        android:visibility="gone"
+        />
+    <ImageButton
+        android:id="@+id/mediaPreviousButton"
+        android:src="@drawable/ic_media_previous"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_toLeftOf="@+id/mediaPauseButton"
+        android:layout_marginBottom="20dip"
+        android:padding="10px"
+        android:background="@color/transparent"
+        android:visibility="gone"
+        />
+    <ImageButton
+        android:id="@+id/mediaNextButton"
+        android:src="@drawable/ic_media_next"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_toRightOf="@+id/mediaPauseButton"
+        android:layout_marginBottom="20dip"
+        android:padding="10px"
+        android:background="@color/transparent"
+        android:visibility="gone"
+        />
+
 </RelativeLayout>
 
