@@ -230,7 +230,7 @@ public class StatusBarService extends IStatusBar.Stub
     int mBlackColor = 0xff000000;
     int mWhiteColor = 0xffffffff;
     int mNotificationTitleColor = mBlackColor;
-    int mNotificationTextColor = mBlackColor;
+    int mNotificationTextColor = mWhiteColor;
     int mNotificationTimeColor = mBlackColor;
     
     // for disabling the status bar
@@ -1814,14 +1814,14 @@ public class StatusBarService extends IStatusBar.Stub
                 Settings.System.getInt(
                         mContext.getContentResolver(),
                         Settings.System.COLOR_NOTIFICATION_LATEST,
-                        mBlackColor
+                        mWhiteColor
                         )
                 );
         mOngoingTitle.setTextColor(
                 Settings.System.getInt(
                         mContext.getContentResolver(),
                         Settings.System.COLOR_NOTIFICATION_ONGOING,
-                        mBlackColor
+                        mWhiteColor
                         )
                 );
         mSpnLabel.setTextColor(
@@ -1849,7 +1849,7 @@ public class StatusBarService extends IStatusBar.Stub
                 Settings.System.getInt(
                         mContext.getContentResolver(),
                         Settings.System.COLOR_NOTIFICATION_TICKER_TEXT,
-                        mBlackColor
+                        mWhiteColor
                         )
                 );
     }
